@@ -64,6 +64,8 @@ class RoastBot(commands.Bot):
         logger.info(f'Bot logged in as {self.user}')
         print("🔥 Hail Mary AI Roast Bot is online and ready to burn egos 🔥")
         print(f"Bot is in {len(self.guilds)} servers")
+        print(f"Command prefix: '{self.command_prefix}'")
+        print("Available commands: !roast, !test")
         print("Invite link: https://discord.com/oauth2/authorize?client_id={}&permissions=2048&scope=bot".format(self.user.id))
 
     async def on_message(self, message):
@@ -228,6 +230,12 @@ class RoastBot(commands.Bot):
         except Exception as e:
             logger.error(f"Error in roast command: {str(e)}")
             await ctx.send("🔥 Something went wrong while preparing your roast. Even I'm embarrassed by this failure.")
+
+    @commands.command(name='test')
+    async def test_command(self, ctx):
+        """Simple test command to verify bot is working"""
+        logger.info(f"Test command called by {ctx.author}")
+        await ctx.send("🔥 Bot is working! Use `!roast` to get roasted!")
 
     async def on_command_error(self, ctx, error):
         """Handle command errors gracefully"""

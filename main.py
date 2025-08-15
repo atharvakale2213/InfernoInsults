@@ -63,6 +63,18 @@ class RoastBot(commands.Bot):
         """Called when the bot has successfully logged in and is ready"""
         logger.info(f'Bot logged in as {self.user}')
         print("🔥 Hail Mary AI Roast Bot is online and ready to burn egos 🔥")
+        print(f"Bot is in {len(self.guilds)} servers")
+        print("Invite link: https://discord.com/oauth2/authorize?client_id={}&permissions=2048&scope=bot".format(self.user.id))
+
+    async def on_message(self, message):
+        """Debug message processing"""
+        if message.author == self.user:
+            return
+        
+        logger.info(f"Received message: '{message.content}' from {message.author} in {message.guild}")
+        
+        # Process commands
+        await self.process_commands(message)
 
     async def get_ai_roast(self, target: str):
         """

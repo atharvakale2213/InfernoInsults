@@ -164,6 +164,24 @@ async def commands_help(ctx):
     )
     
     embed.add_field(
+        name="🎯 General Fun",
+        value="`,story` - AI generates a random story\n"
+              "`,joke` - Get a clever AI joke\n"
+              "`,advice @user` - Actually helpful life advice\n"
+              "`,riddle` - Brain-teasing riddles with answers",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🛠️ Utilities",
+        value="`,poll question | option1 | option2` - Create polls\n"
+              "`,flip` - Coin flip with style\n"
+              "`,dice NdN` - Roll dice (e.g. 2d6)\n"
+              "`,choose option1 | option2 | option3` - Decision maker",
+        inline=False
+    )
+    
+    embed.add_field(
         name="⚙️ Utility",
         value="`,commands` - Show this menu\n"
               "`,test` - Check bot status",
@@ -648,6 +666,313 @@ async def fortune(ctx, target: discord.Member = None):
     embed.add_field(name="Seeker of Truth", value=mention, inline=True)
     embed.add_field(name="Your Destiny", value=fortune, inline=False)
     embed.set_footer(text="🌙 Madame Roastbot's Crystal Ball")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def story(ctx):
+    """Generate a random AI story"""
+    logger.info(f"Story command executed by {ctx.author}")
+    
+    if not ai_client:
+        fallback_stories = [
+            "Once upon a time, in a Discord server far, far away, there lived a bot who told better stories than this one.",
+            "There was a user who asked for a story. The bot gave them this sentence instead. The end.",
+            "In a world where AI wasn't available, humans had to use their imagination. Scary, right?",
+            "A long time ago, before AI, people had to make up their own entertainment. Those were dark times indeed."
+        ]
+        import random as rnd
+        story = rnd.choice(fallback_stories)
+    else:
+        try:
+            async with ctx.typing():
+                story_prompts = [
+                    "Write a short, entertaining story about an unlikely friendship",
+                    "Create a funny story about someone's worst day that turns out great",
+                    "Tell a tale about a magical object found in an ordinary place",
+                    "Write about someone who discovers they have a useless superpower",
+                    "Create a story about a mix-up that leads to an adventure"
+                ]
+                import random as rnd
+                prompt = rnd.choice(story_prompts)
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You're a creative storyteller. Write engaging, family-friendly short stories that are entertaining and imaginative."},
+                        {"role": "user", "content": f"{prompt}. Keep it under 200 words and make it engaging."}
+                    ],
+                    max_tokens=250,
+                    temperature=0.9
+                )
+                story = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI story failed: {e}")
+            story = "Once upon a time, the AI was too busy to tell a proper story. Maybe next time!"
+    
+    embed = discord.Embed(title="📚 AI STORY TIME 📚", color=0x9370DB)
+    embed.add_field(name="Today's Tale", value=story, inline=False)
+    embed.set_footer(text="Generated fresh just for you")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def joke(ctx):
+    """Get a clever AI joke"""
+    logger.info(f"Joke command executed by {ctx.author}")
+    
+    if not ai_client:
+        fallback_jokes = [
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+            "Why don't eggs tell jokes? They'd crack each other up!",
+            "I'm reading a book about anti-gravity. It's impossible to put down!",
+            "Why did the scarecrow win an award? He was outstanding in his field!"
+        ]
+        import random as rnd
+        joke = rnd.choice(fallback_jokes)
+    else:
+        try:
+            async with ctx.typing():
+                joke_types = [
+                    "Tell me a clever pun joke",
+                    "Give me a witty one-liner",
+                    "Create a funny observational joke",
+                    "Tell me a joke with unexpected wordplay",
+                    "Give me a clever dad joke with a twist"
+                ]
+                import random as rnd
+                prompt = rnd.choice(joke_types)
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You're a comedian who specializes in clever, family-friendly humor. Create original jokes that are witty and entertaining."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=100,
+                    temperature=0.9
+                )
+                joke = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI joke failed: {e}")
+            joke = "Why did the AI break up with the chatbot? It wasn't getting the responses it wanted!"
+    
+    await ctx.send(f"😄 **JOKE TIME** 😄\n{joke}")
+
+@bot.command()
+async def advice(ctx, target: discord.Member = None):
+    """Actually helpful life advice"""
+    logger.info(f"Advice command executed by {ctx.author}")
+    
+    if target:
+        target_name = target.display_name
+        mention = target.mention
+    else:
+        target_name = ctx.author.display_name
+        mention = ctx.author.mention
+    
+    if not ai_client:
+        advice_list = [
+            "Remember: progress, not perfection. Small steps count.",
+            "Be kind to yourself. You're doing better than you think.",
+            "Focus on what you can control, let go of what you can't.",
+            "Every expert was once a beginner. Keep learning.",
+            "Your current struggles are building your future strength."
+        ]
+        import random as rnd
+        advice = rnd.choice(advice_list)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Give genuinely helpful, positive life advice to {target_name}. Make it encouraging, practical, and uplifting without being preachy."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You're a wise, supportive mentor who gives genuinely helpful life advice. Be encouraging and practical."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=150,
+                    temperature=0.7
+                )
+                advice = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI advice failed: {e}")
+            advice = "Here's some advice: keep being awesome, even when things get tough!"
+    
+    embed = discord.Embed(title="🌟 LIFE ADVICE 🌟", color=0x32CD32)
+    embed.add_field(name="For", value=mention, inline=False)
+    embed.add_field(name="Wisdom", value=advice, inline=False)
+    embed.set_footer(text="Sometimes we all need encouragement")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def riddle(ctx):
+    """Get a brain-teasing riddle"""
+    logger.info(f"Riddle command executed by {ctx.author}")
+    
+    if not ai_client:
+        riddles = [
+            {"riddle": "I have keys but no locks. I have space but no room. You can enter, but you can't go outside. What am I?", "answer": "A keyboard"},
+            {"riddle": "I'm tall when I'm young, and short when I'm old. What am I?", "answer": "A candle"},
+            {"riddle": "What has hands but cannot clap?", "answer": "A clock"},
+            {"riddle": "What gets wetter the more it dries?", "answer": "A towel"},
+            {"riddle": "What can travel around the world while staying in a corner?", "answer": "A stamp"}
+        ]
+        import random as rnd
+        riddle_data = rnd.choice(riddles)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = "Create an original, clever riddle with a surprising answer. Make it challenging but solvable."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "Create original riddles with clever wordplay and surprising answers. Format: RIDDLE: [question] ANSWER: [answer]"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=100,
+                    temperature=0.8
+                )
+                content = response.choices[0].message.content.strip()
+                
+                if "ANSWER:" in content:
+                    parts = content.split("ANSWER:")
+                    riddle_text = parts[0].replace("RIDDLE:", "").strip()
+                    answer = parts[1].strip()
+                    riddle_data = {"riddle": riddle_text, "answer": answer}
+                else:
+                    riddle_data = {"riddle": content, "answer": "Think about it!"}
+        except Exception as e:
+            logger.warning(f"AI riddle failed: {e}")
+            riddle_data = {"riddle": "What's broken but never falls, and what falls but never breaks?", "answer": "Day breaks, night falls"}
+    
+    embed = discord.Embed(title="🧩 RIDDLE TIME 🧩", color=0xFFD700)
+    embed.add_field(name="Challenge", value=riddle_data["riddle"], inline=False)
+    embed.add_field(name="Think you know?", value="React with 🤔 if you want the answer!", inline=False)
+    
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("🤔")
+    
+    def check(reaction, user):
+        return user != bot.user and str(reaction.emoji) == "🤔" and reaction.message == message
+    
+    try:
+        reaction, user = await bot.wait_for('reaction_add', timeout=30.0, check=check)
+        answer_embed = discord.Embed(title="💡 ANSWER REVEALED 💡", color=0x00FF7F)
+        answer_embed.add_field(name="Solution", value=riddle_data["answer"], inline=False)
+        await ctx.send(embed=answer_embed)
+    except:
+        pass  # Timeout, no answer reveal
+
+@bot.command()
+async def poll(ctx, *, question_and_options=None):
+    """Create a poll with options"""
+    logger.info(f"Poll command executed by {ctx.author}")
+    
+    if not question_and_options:
+        await ctx.send("🔥 Usage: `,poll Question here | Option 1 | Option 2 | Option 3`")
+        return
+    
+    parts = question_and_options.split(" | ")
+    if len(parts) < 3:
+        await ctx.send("🔥 Need at least a question and 2 options! Use | to separate them.")
+        return
+    
+    question = parts[0]
+    options = parts[1:6]  # Max 5 options
+    
+    embed = discord.Embed(title="📊 POLL", color=0x1E90FF)
+    embed.add_field(name="Question", value=question, inline=False)
+    
+    reactions = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+    option_text = ""
+    for i, option in enumerate(options):
+        option_text += f"{reactions[i]} {option}\n"
+    
+    embed.add_field(name="Options", value=option_text, inline=False)
+    embed.set_footer(text="React to vote!")
+    
+    message = await ctx.send(embed=embed)
+    
+    for i in range(len(options)):
+        await message.add_reaction(reactions[i])
+
+@bot.command()
+async def flip(ctx):
+    """Coin flip with style"""
+    logger.info(f"Flip command executed by {ctx.author}")
+    
+    import random as rnd
+    result = rnd.choice(["Heads", "Tails"])
+    
+    embed = discord.Embed(title="🪙 COIN FLIP 🪙", color=0xFFD700)
+    embed.add_field(name="Result", value=f"**{result}**", inline=False)
+    embed.add_field(name="Flipper", value=ctx.author.mention, inline=True)
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def dice(ctx, dice_notation="1d6"):
+    """Roll dice (e.g., 2d6, 1d20)"""
+    logger.info(f"Dice command executed by {ctx.author}")
+    
+    try:
+        import random as rnd
+        parts = dice_notation.lower().split('d')
+        if len(parts) != 2:
+            raise ValueError
+        
+        num_dice = int(parts[0])
+        num_sides = int(parts[1])
+        
+        if num_dice > 10 or num_sides > 100:
+            await ctx.send("🔥 Let's keep it reasonable! Max 10 dice with 100 sides each.")
+            return
+        
+        rolls = [rnd.randint(1, num_sides) for _ in range(num_dice)]
+        total = sum(rolls)
+        
+        embed = discord.Embed(title="🎲 DICE ROLL 🎲", color=0xFF4500)
+        embed.add_field(name="Dice", value=f"{num_dice}d{num_sides}", inline=True)
+        embed.add_field(name="Rolls", value=str(rolls), inline=True)
+        embed.add_field(name="Total", value=f"**{total}**", inline=True)
+        embed.add_field(name="Roller", value=ctx.author.mention, inline=False)
+        
+        await ctx.send(embed=embed)
+        
+    except:
+        await ctx.send("🔥 Use format like `2d6` (2 six-sided dice) or `1d20` (1 twenty-sided die)")
+
+@bot.command()
+async def choose(ctx, *, options=None):
+    """Decision maker - choose from options"""
+    logger.info(f"Choose command executed by {ctx.author}")
+    
+    if not options:
+        await ctx.send("🔥 Usage: `,choose pizza | burgers | tacos` - Let me decide for you!")
+        return
+    
+    choices = [choice.strip() for choice in options.split("|")]
+    if len(choices) < 2:
+        await ctx.send("🔥 Give me at least 2 options separated by | symbols!")
+        return
+    
+    import random as rnd
+    chosen = rnd.choice(choices)
+    
+    embed = discord.Embed(title="🤖 DECISION MAKER 🤖", color=0x8A2BE2)
+    embed.add_field(name="Options", value=" | ".join(choices), inline=False)
+    embed.add_field(name="My Choice", value=f"**{chosen}**", inline=False)
+    embed.add_field(name="For", value=ctx.author.mention, inline=True)
+    embed.set_footer(text="Decision made with advanced AI randomness")
     
     await ctx.send(embed=embed)
 

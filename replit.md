@@ -16,6 +16,7 @@ This is a Discord bot called "Hail Mary AI Roast Bot" that generates AI-powered 
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Deployment preference: Railway hosting platform (free tier)
 
 # System Architecture
 

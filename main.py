@@ -66,7 +66,8 @@ class RoastBot(commands.Bot):
         print(f"Bot is in {len(self.guilds)} servers")
         print(f"Command prefix: '{self.command_prefix}'")
         print("Available commands: !roast, !test")
-        print("Invite link: https://discord.com/oauth2/authorize?client_id={}&permissions=2048&scope=bot".format(self.user.id))
+        if self.user:
+            print("Invite link: https://discord.com/oauth2/authorize?client_id={}&permissions=2048&scope=bot".format(self.user.id))
 
     async def on_message(self, message):
         """Debug message processing"""
@@ -75,8 +76,20 @@ class RoastBot(commands.Bot):
         
         logger.info(f"Received message: '{message.content}' from {message.author} in {message.guild}")
         
+        # Check if it's a command
+        if message.content.startswith(self.command_prefix):
+            logger.info(f"Command detected: '{message.content}'")
+        
         # Process commands
         await self.process_commands(message)
+
+    async def on_command(self, ctx):
+        """Called when a command is invoked"""
+        logger.info(f"Command '{ctx.command}' invoked by {ctx.author}")
+
+    async def on_command_completion(self, ctx):
+        """Called when a command completes successfully"""
+        logger.info(f"Command '{ctx.command}' completed successfully")
 
     async def get_ai_roast(self, target: str):
         """
@@ -178,8 +191,8 @@ class RoastBot(commands.Bot):
             roast_template = random.choice(self.savage_roasts)
             return roast_template.format(target=target)
 
-    @commands.command(name='roast')
-    async def roast_command(self, ctx, *, target=None):
+    @commands.command()
+    async def roast(self, ctx, *, target=None):
         """
         Roast command that generates savage AI-powered roasts
         
@@ -231,8 +244,8 @@ class RoastBot(commands.Bot):
             logger.error(f"Error in roast command: {str(e)}")
             await ctx.send("🔥 Something went wrong while preparing your roast. Even I'm embarrassed by this failure.")
 
-    @commands.command(name='test')
-    async def test_command(self, ctx):
+    @commands.command()
+    async def test(self, ctx):
         """Simple test command to verify bot is working"""
         logger.info(f"Test command called by {ctx.author}")
         await ctx.send("🔥 Bot is working! Use `!roast` to get roasted!")

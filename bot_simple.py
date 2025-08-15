@@ -14,14 +14,24 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Initialize OpenAI client
-openai_client = None
-api_key = os.getenv('OPENAI_API_KEY')
-if api_key:
-    openai_client = OpenAI(api_key=api_key)
+# Initialize AI client (OpenRouter or OpenAI)
+ai_client = None
+openrouter_key = os.getenv('OPENROUTER_API_KEY')
+openai_key = os.getenv('OPENAI_API_KEY')
+
+if openrouter_key:
+    # Use OpenRouter with custom base URL
+    ai_client = OpenAI(
+        api_key=openrouter_key,
+        base_url="https://openrouter.ai/api/v1"
+    )
+    logger.info("OpenRouter client initialized for AI-powered roasts")
+elif openai_key:
+    # Fallback to direct OpenAI
+    ai_client = OpenAI(api_key=openai_key)
     logger.info("OpenAI client initialized for AI-powered roasts")
 else:
-    logger.warning("OPENAI_API_KEY not found - using fallback roasts")
+    logger.warning("No AI API key found - using fallback roasts")
 
 # Fallback roasts (used if AI fails)
 fallback_roasts = [
@@ -39,7 +49,7 @@ fallback_roasts = [
 
 async def get_ai_roast(target_name):
     """Get a dark, unhinged AI-generated roast"""
-    if not openai_client:
+    if not ai_client:
         # Use fallback if no AI
         roast_template = random.choice(fallback_roasts)
         return roast_template.format(target=target_name)
@@ -61,10 +71,14 @@ Be completely unhinged but clever. Make it so brutal that even the AI feels bad 
 
 Target: {target_name}"""
         
-        # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. 
-        # do not change this unless explicitly requested by the user
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
+        # Choose model based on provider
+        model = "gpt-4o"  # Works for both OpenRouter and OpenAI
+        if os.getenv('OPENROUTER_API_KEY'):
+            # OpenRouter supports many models - using GPT-4o for consistency
+            model = "openai/gpt-4o"
+        
+        response = ai_client.chat.completions.create(
+            model=model,
             messages=[
                 {"role": "system", "content": "You are a savage roast comedian with no filter. Generate the most brutal, unhinged roasts possible while staying clever and avoiding actual harm."},
                 {"role": "user", "content": prompt}

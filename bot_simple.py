@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Create bot with intents
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix=',', intents=intents)
 
 # Initialize AI client (OpenRouter or OpenAI)
 ai_client = None
@@ -112,7 +112,7 @@ async def on_message(message):
     
     logger.info(f"Received message: '{message.content}' from {message.author}")
     
-    if message.content.startswith('!'):
+    if message.content.startswith(','):
         logger.info(f"Command detected: '{message.content}'")
     
     await bot.process_commands(message)
@@ -130,32 +130,32 @@ async def commands_help(ctx):
     
     embed.add_field(
         name="🎯 Basic Roasting",
-        value="`!roast` - Get AI-roasted yourself\n"
-              "`!roast @user` - Roast someone specific\n"
-              "`!roast username` - Roast by name",
+        value="`,roast` - Get AI-roasted yourself\n"
+              "`,roast @user` - Roast someone specific\n"
+              "`,roast username` - Roast by name",
         inline=False
     )
     
     embed.add_field(
         name="⚔️ Battle Commands",
-        value="`!battle @user1 @user2` - AI judges a roast battle\n"
-              "`!challenge @user` - Challenge someone to a roast-off\n"
-              "`!random` - Get a random savage roast",
+        value="`,battle @user1 @user2` - AI judges a roast battle\n"
+              "`,challenge @user` - Challenge someone to a roast-off\n"
+              "`,random` - Get a random savage roast",
         inline=False
     )
     
     embed.add_field(
         name="🎲 Fun Commands",
-        value="`!compliment @user` - Backhanded AI compliment\n"
-              "`!rate @user` - Rate someone's roastability\n"
-              "`!stats` - Your roasting statistics",
+        value="`,compliment @user` - Backhanded AI compliment\n"
+              "`,rate @user` - Rate someone's roastability\n"
+              "`,stats` - Your roasting statistics",
         inline=False
     )
     
     embed.add_field(
         name="⚙️ Utility",
-        value="`!commands` - Show this menu\n"
-              "`!test` - Check bot status",
+        value="`,commands` - Show this menu\n"
+              "`,test` - Check bot status",
         inline=False
     )
     
@@ -167,7 +167,7 @@ async def commands_help(ctx):
 async def test(ctx):
     """Simple test command"""
     logger.info(f"Test command executed by {ctx.author}")
-    await ctx.send("🔥 Bot is working! Use `!commands` to see all commands!")
+    await ctx.send("🔥 Bot is working! Use `,commands` to see all commands!")
 
 @bot.command()
 async def roast(ctx, *, target=None):
@@ -206,7 +206,7 @@ async def battle(ctx, user1: discord.Member = None, user2: discord.Member = None
     logger.info(f"Battle command executed by {ctx.author}")
     
     if not user1 or not user2:
-        await ctx.send("🔥 Usage: `!battle @user1 @user2` - Let AI judge who gets roasted harder!")
+        await ctx.send("🔥 Usage: `,battle @user1 @user2` - Let AI judge who gets roasted harder!")
         return
     
     if user1 == user2:
@@ -235,7 +235,7 @@ async def challenge(ctx, target: discord.Member = None):
     logger.info(f"Challenge command executed by {ctx.author}")
     
     if not target:
-        await ctx.send("🔥 Usage: `!challenge @user` - Challenge someone to a roast-off!")
+        await ctx.send("🔥 Usage: `,challenge @user` - Challenge someone to a roast-off!")
         return
     
     if target == ctx.author:
@@ -244,7 +244,7 @@ async def challenge(ctx, target: discord.Member = None):
     
     await ctx.send(f"🔥 {ctx.author.mention} has challenged {target.mention} to a roast battle! "
                    f"Will {target.display_name} accept this digital duel of destruction? "
-                   f"Use `!battle {ctx.author.mention} {target.mention}` to settle this!")
+                   f"Use `,battle {ctx.author.mention} {target.mention}` to settle this!")
 
 @bot.command()
 async def random(ctx):

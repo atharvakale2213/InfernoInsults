@@ -18,21 +18,44 @@ class RoastBot(commands.Bot):
         
         # Load environment variables - these will be set by the user
         self.discord_token = os.getenv('DISCORD_BOT_TOKEN')
-        self.ai_api_url = os.getenv('AI_API_URL')  # User will provide their AI API endpoint
-        self.ai_api_key = os.getenv('AI_API_KEY')  # User will provide their AI API key
+        self.ai_api_url = os.getenv('AI_API_URL')  # Optional - will use fallback roasts if not provided
+        self.ai_api_key = os.getenv('AI_API_KEY')  # Optional - will use fallback roasts if not provided
         
-        # Validate environment variables at startup
+        # Validate required environment variables at startup
         if not self.discord_token:
             logger.error("DISCORD_BOT_TOKEN environment variable is required")
             raise ValueError("Discord bot token not provided")
         
-        if not self.ai_api_url:
-            logger.error("AI_API_URL environment variable is required") 
-            raise ValueError("AI API URL not provided")
+        # AI API is optional - bot will work with built-in roasts if not provided
+        if not self.ai_api_url or not self.ai_api_key:
+            logger.warning("AI API URL or key not provided - using built-in savage roasts")
+            self.use_fallback_roasts = True
+        else:
+            self.use_fallback_roasts = False
         
-        if not self.ai_api_key:
-            logger.error("AI_API_KEY environment variable is required")
-            raise ValueError("AI API key not provided")
+        # Built-in savage roasts for when AI API isn't available
+        self.savage_roasts = [
+            "{target}, your existence is so bland that even vanilla ice cream calls you basic.",
+            "{target}, I've seen more personality in a Windows error message.",
+            "{target}, you're the human equivalent of a participation trophy - technically there, but nobody's impressed.",
+            "{target}, your life is like a broken pencil - completely pointless.",
+            "{target}, if stupidity was a superpower, you'd be the entire Justice League.",
+            "{target}, you're proof that even God makes rough drafts.",
+            "{target}, I'd call you a tool, but that would be insulting to useful objects.",
+            "{target}, your brain must be made of the same material as a black hole - nothing gets out.",
+            "{target}, you're like a software update - nobody wants you, but you show up anyway.",
+            "{target}, calling you a clown would be unfair to professional entertainers.",
+            "{target}, your IQ is so low, you'd lose a debate with a goldfish.",
+            "{target}, you're the reason aliens won't visit Earth.",
+            "{target}, if ignorance is bliss, you must be the happiest person alive.",
+            "{target}, your personality has all the depth of a puddle in the desert.",
+            "{target}, you're like a WiFi password - completely forgettable and nobody wants to share you.",
+            "{target}, I've met brick walls with more emotional intelligence than you.",
+            "{target}, your sense of humor is drier than the Sahara and twice as empty.",
+            "{target}, you're the human equivalent of a 'Skip Ad' button - everyone wants you gone.",
+            "{target}, if awkwardness was an art form, you'd be the Mona Lisa.",
+            "{target}, your life choices make a random number generator look strategic."
+        ]
         
         logger.info("Environment variables loaded successfully")
 
@@ -43,14 +66,22 @@ class RoastBot(commands.Bot):
 
     async def get_ai_roast(self, target: str):
         """
-        Get a brutal roast from the AI API
+        Get a brutal roast from AI API or fallback to built-in roasts
         
         Args:
             target: The name/person to roast
             
         Returns:
-            AI-generated roast string or None if failed
+            Roast string (AI-generated or built-in)
         """
+        # Use fallback roasts if AI API is not configured
+        if self.use_fallback_roasts:
+            roast_template = random.choice(self.savage_roasts)
+            roast = roast_template.format(target=target)
+            logger.info(f"Generated built-in roast for: {target}")
+            return roast
+            
+        # Try to use AI API if configured
         try:
             # Craft the savage roast prompt - made extra brutal as requested
             prompt = f"Roast {target} in an extremely savage, dark-humor style. Make it creative, absurd, and sarcastic. Be brutally unhinged but clever. No slurs, no NSFW, no real-world tragedies. Maximum savagery and wit required. Make it devastatingly funny and brutal."
@@ -69,12 +100,13 @@ class RoastBot(commands.Bot):
                 'temperature': 0.9  # High temperature for more creative/savage responses
             }
             
-            logger.info(f"Making API request to roast: {target}")
+            logger.info(f"Making AI API request to roast: {target}")
             
             # Make the API request with timeout - ensure URL is not None
             if not self.ai_api_url:
-                logger.error("AI API URL is not configured")
-                return None
+                logger.warning("AI API URL is not configured, falling back to built-in roasts")
+                roast_template = random.choice(self.savage_roasts)
+                return roast_template.format(target=target)
                 
             response = requests.post(
                 self.ai_api_url,
@@ -108,24 +140,29 @@ class RoastBot(commands.Bot):
                     roast = data['text'].strip()
                 
                 if roast:
-                    logger.info(f"Successfully generated roast for: {target}")
+                    logger.info(f"Successfully generated AI roast for: {target}")
                     return roast
                 else:
-                    logger.warning("AI API returned empty response")
-                    return None
+                    logger.warning("AI API returned empty response, using fallback")
+                    roast_template = random.choice(self.savage_roasts)
+                    return roast_template.format(target=target)
             else:
-                logger.error(f"AI API request failed with status {response.status_code}: {response.text}")
-                return None
+                logger.warning(f"AI API request failed with status {response.status_code}, using fallback")
+                roast_template = random.choice(self.savage_roasts)
+                return roast_template.format(target=target)
                 
         except requests.exceptions.Timeout:
-            logger.error("AI API request timed out")
-            return None
+            logger.warning("AI API request timed out, using fallback")
+            roast_template = random.choice(self.savage_roasts)
+            return roast_template.format(target=target)
         except requests.exceptions.RequestException as e:
-            logger.error(f"AI API request failed: {str(e)}")
-            return None
+            logger.warning(f"AI API request failed: {str(e)}, using fallback")
+            roast_template = random.choice(self.savage_roasts)
+            return roast_template.format(target=target)
         except Exception as e:
-            logger.error(f"Unexpected error getting AI roast: {str(e)}")
-            return None
+            logger.warning(f"Unexpected error getting AI roast: {str(e)}, using fallback")
+            roast_template = random.choice(self.savage_roasts)
+            return roast_template.format(target=target)
 
     @commands.command(name='roast')
     async def roast_command(self, ctx, *, target=None):
@@ -142,14 +179,9 @@ class RoastBot(commands.Bot):
             if random.random() < 0.1:
                 target_name = "myself (this bot)"
                 roast = await self.get_ai_roast(target_name)
-                if roast:
-                    await ctx.send(f"🔥 **Self-Roast Special:** {roast}")
-                    logger.info("Bot successfully roasted itself")
-                    return
-                else:
-                    # Fallback if self-roast API fails
-                    await ctx.send("🔥 I tried to roast myself but even the AI couldn't handle my perfection. Pathetic.")
-                    return
+                await ctx.send(f"🔥 **Self-Roast Special:** {roast}")
+                logger.info("Bot successfully roasted itself")
+                return
 
             # Determine the target
             if target:
@@ -168,23 +200,18 @@ class RoastBot(commands.Bot):
 
             # Add typing indicator for dramatic effect
             async with ctx.typing():
-                # Get the brutal roast from AI
+                # Get the brutal roast (AI or built-in)
                 roast = await self.get_ai_roast(target_name)
                 
-                if roast:
-                    # Format the response with optional mention
-                    if mention_tag and target:
-                        response = f"🔥 {mention_tag} {roast}"
-                    else:
-                        response = f"🔥 {roast}"
-                    
-                    await ctx.send(response)
-                    logger.info(f"Successfully roasted {target_name}")
+                # The get_ai_roast method now always returns a roast (never None)
+                # Format the response with optional mention
+                if mention_tag and target:
+                    response = f"🔥 {mention_tag} {roast}"
                 else:
-                    # Fallback message if AI API fails
-                    fallback_msg = f"🔥 The AI is too busy being disappointed in {target_name} to generate a proper roast right now. Try again later, if you can handle the heat."
-                    await ctx.send(fallback_msg)
-                    logger.warning(f"Failed to get AI roast for {target_name}, used fallback")
+                    response = f"🔥 {roast}"
+                
+                await ctx.send(response)
+                logger.info(f"Successfully roasted {target_name}")
                     
         except Exception as e:
             logger.error(f"Error in roast command: {str(e)}")

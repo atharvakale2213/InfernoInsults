@@ -15,27 +15,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Discord Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "discord_bot_test"
+args = "Simple Bot"
 
 [[workflows.workflow]]
-name = "Discord Bot"
+name = "Simple Bot"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pip install discord.py requests && python main.py"
+args = "python bot_simple.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "discord_bot_test"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pip install discord.py requests && python main.py"

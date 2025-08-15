@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 import os
 import logging
+from openai import OpenAI
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -13,19 +14,73 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Built-in savage roasts
-roasts = [
-    "{target}, your existence is so bland that even vanilla ice cream calls you basic.",
-    "{target}, I've seen more personality in a Windows error message.",
-    "{target}, you're the human equivalent of a participation trophy - technically there, but nobody's impressed.",
-    "{target}, your life is like a broken pencil - completely pointless.",
-    "{target}, if stupidity was a superpower, you'd be the entire Justice League.",
-    "{target}, you're proof that even God makes rough drafts.",
-    "{target}, I'd call you a tool, but that would be insulting to useful objects.",
-    "{target}, your brain must be made of the same material as a black hole - nothing gets out.",
-    "{target}, you're like a software update - nobody wants you, but you show up anyway.",
-    "{target}, calling you a clown would be unfair to professional entertainers."
+# Initialize OpenAI client
+openai_client = None
+api_key = os.getenv('OPENAI_API_KEY')
+if api_key:
+    openai_client = OpenAI(api_key=api_key)
+    logger.info("OpenAI client initialized for AI-powered roasts")
+else:
+    logger.warning("OPENAI_API_KEY not found - using fallback roasts")
+
+# Fallback roasts (used if AI fails)
+fallback_roasts = [
+    "{target}, your existence is so meaningless that even the void feels sorry for you.",
+    "{target}, I've seen more personality in a funeral home brochure.",
+    "{target}, you're what happens when mediocrity gets tired of trying.",
+    "{target}, your life is like a broken calculator - even the errors don't add up.",
+    "{target}, if disappointment was an art form, you'd be the Mona Lisa.",
+    "{target}, you're proof that natural selection sometimes takes a coffee break.",
+    "{target}, calling you pathetic would be an upgrade from your current status.",
+    "{target}, your brain operates on the same frequency as elevator music - barely there and deeply annoying.",
+    "{target}, you're like a participation trophy that even pity won't claim.",
+    "{target}, existence itself cringes when you enter a room."
 ]
+
+async def get_ai_roast(target_name):
+    """Get a dark, unhinged AI-generated roast"""
+    if not openai_client:
+        # Use fallback if no AI
+        roast_template = random.choice(fallback_roasts)
+        return roast_template.format(target=target_name)
+    
+    try:
+        # Ultra-dark, unhinged roast prompt
+        prompt = f"""Create an absolutely savage, dark humor roast for someone named '{target_name}'. 
+        
+Make it:
+- Brutally unhinged and creative
+- Dark psychological humor
+- Devastatingly clever wordplay
+- Absurdly specific and weird
+- Maximum emotional damage
+- Absolutely ruthless
+
+Rules: No slurs, no threats, no real-world tragedies. Just pure psychological warfare through humor.
+Be completely unhinged but clever. Make it so brutal that even the AI feels bad for generating it.
+
+Target: {target_name}"""
+        
+        # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. 
+        # do not change this unless explicitly requested by the user
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a savage roast comedian with no filter. Generate the most brutal, unhinged roasts possible while staying clever and avoiding actual harm."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=200,
+            temperature=0.95  # Maximum creativity for unhinged responses
+        )
+        
+        roast = response.choices[0].message.content.strip()
+        logger.info(f"Generated AI roast for {target_name}")
+        return roast
+        
+    except Exception as e:
+        logger.warning(f"AI roast failed: {e}, using fallback")
+        roast_template = random.choice(fallback_roasts)
+        return roast_template.format(target=target_name)
 
 @bot.event
 async def on_ready():
@@ -54,7 +109,7 @@ async def test(ctx):
 
 @bot.command()
 async def roast(ctx, *, target=None):
-    """Roast command"""
+    """Dark, unhinged AI-powered roast command"""
     logger.info(f"Roast command executed by {ctx.author}, target: {target}")
     
     # Determine target
@@ -69,9 +124,10 @@ async def roast(ctx, *, target=None):
         target_name = ctx.author.display_name
         mention_tag = ctx.author.mention
     
-    # Get random roast
-    roast_template = random.choice(roasts)
-    roast_text = roast_template.format(target=target_name)
+    # Show typing indicator for dramatic effect
+    async with ctx.typing():
+        # Get AI-powered dark roast
+        roast_text = await get_ai_roast(target_name)
     
     # Send response
     if mention_tag and target:
@@ -80,7 +136,7 @@ async def roast(ctx, *, target=None):
         response = f"🔥 {roast_text}"
     
     await ctx.send(response)
-    logger.info(f"Roast sent to {target_name}")
+    logger.info(f"Dark AI roast sent to {target_name}")
 
 if __name__ == "__main__":
     token = os.getenv('DISCORD_BOT_TOKEN')

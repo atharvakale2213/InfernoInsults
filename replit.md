@@ -4,11 +4,14 @@ This is a Discord bot called "Hail Mary AI Roast Bot" that generates AI-powered 
 
 ## Recent Changes (August 15, 2025)
 - Upgraded from pre-written roasts to AI-powered roast generation using OpenRouter
+- Changed command prefix from ! to , for better compatibility
 - Added comprehensive help menu with embedded commands
 - Implemented battle system for roast competitions between users
 - Added fun commands: challenge, random roasts, backhanded compliments, roastability ratings
 - Created statistics system for entertainment value
 - Enhanced user experience with rich embeds and interactive features
+- Added 6 new interactive commands: verse (rap battles), compare (user comparisons), truth (brutal honesty), roastme (maximum damage), therapy (fake therapy roasts), fortune (dark predictions)
+- Implemented specialized AI prompts for each command type with unique personalities
 
 # User Preferences
 

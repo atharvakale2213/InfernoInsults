@@ -148,7 +148,18 @@ async def commands_help(ctx):
         name="🎲 Fun Commands",
         value="`,compliment @user` - Backhanded AI compliment\n"
               "`,rate @user` - Rate someone's roastability\n"
-              "`,stats` - Your roasting statistics",
+              "`,stats` - Your roasting statistics\n"
+              "`,verse @user` - Generate a roast rap verse\n"
+              "`,compare @user1 @user2` - AI compares two users",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🎮 Interactive Games",
+        value="`,truth @user` - Brutally honest AI truth\n"
+              "`,roastme` - Get the most savage roast possible\n"
+              "`,therapy @user` - Fake therapy session (roast disguised as help)\n"
+              "`,fortune @user` - Dark fortune telling",
         inline=False
     )
     
@@ -362,6 +373,281 @@ async def stats(ctx):
     embed.add_field(name="💎 Roast Quality", value="Unhinged", inline=True)
     
     embed.set_footer(text="Statistics are generated for entertainment purposes")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def verse(ctx, target: discord.Member = None):
+    """Generate a savage rap verse roast"""
+    logger.info(f"Verse command executed by {ctx.author}")
+    
+    if target:
+        target_name = target.display_name
+        mention = target.mention
+    else:
+        target_name = ctx.author.display_name
+        mention = ctx.author.mention
+    
+    if not ai_client:
+        fallback_verses = [
+            f"Yo {target_name}, your rhymes are so weak, even auto-tune gave up\nYour flow's so broken, it needs a bandage and a crutch",
+            f"{target_name} stepped to the mic, biggest mistake of the night\nYour bars are so trash, they belong out of sight",
+            f"Listen {target_name}, your style's prehistoric\nMy verses hit harder than your life euphoric"
+        ]
+        import random as rnd
+        verse = rnd.choice(fallback_verses)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Write a brutal 4-line rap verse roasting {target_name}. Make it rhythmic, clever, and devastatingly savage. Use hip-hop wordplay and internal rhymes."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You are a savage battle rapper. Create brutal, clever rap verses with perfect flow and devastating wordplay."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=200,
+                    temperature=0.95
+                )
+                verse = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI verse failed: {e}")
+            verse = f"Yo {target_name}, your existence is questionable\nEven my fallback verse is more respectable"
+    
+    await ctx.send(f"🎤 **RAP BATTLE VERSE** 🎤\n{mention}\n```{verse}```")
+
+@bot.command()
+async def compare(ctx, user1: discord.Member = None, user2: discord.Member = None):
+    """AI compares two users in a savage way"""
+    logger.info(f"Compare command executed by {ctx.author}")
+    
+    if not user1 or not user2:
+        await ctx.send("🔥 Usage: `,compare @user1 @user2` - Let AI brutally compare two people!")
+        return
+    
+    if user1 == user2:
+        await ctx.send("🔥 Comparing someone to themselves? That's the level of creativity I'd expect from you.")
+        return
+    
+    if not ai_client:
+        comparisons = [
+            f"Between {user1.display_name} and {user2.display_name}, it's like choosing between expired milk and spoiled cheese.",
+            f"{user1.display_name} vs {user2.display_name} is like comparing a broken calculator to a malfunctioning computer.",
+            f"One's mediocre, the other's disappointing. I'll let you figure out which is which."
+        ]
+        import random as rnd
+        comparison = rnd.choice(comparisons)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Compare {user1.display_name} and {user2.display_name} in the most savage, creative way possible. Make it funny and brutally honest while roasting both equally."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You excel at savage comparisons that roast both subjects equally with creative analogies."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=200,
+                    temperature=0.9
+                )
+                comparison = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI comparison failed: {e}")
+            comparison = f"Both {user1.display_name} and {user2.display_name} are uniquely disappointing in their own special ways."
+    
+    embed = discord.Embed(title="⚖️ SAVAGE COMPARISON ⚖️", color=0xFF6600)
+    embed.add_field(name="The Verdict", value=comparison, inline=False)
+    embed.add_field(name="Contestants", value=f"{user1.mention} vs {user2.mention}", inline=False)
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def truth(ctx, target: discord.Member = None):
+    """Brutally honest AI truth about someone"""
+    logger.info(f"Truth command executed by {ctx.author}")
+    
+    if target:
+        target_name = target.display_name
+        mention = target.mention
+    else:
+        target_name = ctx.author.display_name
+        mention = ctx.author.mention
+    
+    if not ai_client:
+        truths = [
+            "The truth is, you're exactly as average as you think you are.",
+            "Your potential peaked in middle school and it's been downhill since.",
+            "You're the human equivalent of room temperature water.",
+            "The most interesting thing about you is how uninteresting you are.",
+            "You're proof that mediocrity is a choice, not a circumstance."
+        ]
+        import random as rnd
+        truth = rnd.choice(truths)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Tell a brutally honest 'truth' about {target_name}. Make it psychologically cutting but clever and humorous. Frame it as harsh but honest feedback."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You deliver harsh truths disguised as wisdom. Be brutally honest but cleverly humorous."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=150,
+                    temperature=0.85
+                )
+                truth = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI truth failed: {e}")
+            truth = "The truth is, even I don't have enough processing power to analyze your issues."
+    
+    await ctx.send(f"💎 **BRUTAL TRUTH** 💎\n{mention} {truth}")
+
+@bot.command()
+async def roastme(ctx):
+    """Get the most savage roast possible"""
+    logger.info(f"Roastme command executed by {ctx.author}")
+    
+    target_name = ctx.author.display_name
+    mention = ctx.author.mention
+    
+    if not ai_client:
+        ultimate_roasts = [
+            "You asked for this, so here's the truth: you're the reason aliens won't visit Earth.",
+            "Your existence is like a participation trophy nobody asked for.",
+            "You're what happens when natural selection takes a sick day.",
+            "If disappointment was an Olympic sport, you'd win gold and still disappoint your parents.",
+            "You're proof that somewhere, a village is missing its idiot."
+        ]
+        import random as rnd
+        roast = rnd.choice(ultimate_roasts)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Generate the most savage, unhinged roast possible for {target_name} who specifically ASKED to be roasted. Pull no punches. Make it so brutal it's legendary. They asked for this level of destruction."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "Generate the most brutal roast possible. They specifically asked for maximum damage. Show no mercy."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=250,
+                    temperature=1.0  # Maximum chaos
+                )
+                roast = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI ultimate roast failed: {e}")
+            roast = "You asked for maximum damage, but even my circuits feel bad about what I was going to say."
+    
+    embed = discord.Embed(title="💀 MAXIMUM DAMAGE ROAST 💀", description="*You asked for this...*", color=0x8B0000)
+    embed.add_field(name="Target Destroyed", value=mention, inline=False)
+    embed.add_field(name="The Annihilation", value=roast, inline=False)
+    embed.set_footer(text="⚠️ Emotional support not included")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def therapy(ctx, target: discord.Member = None):
+    """Fake therapy session that's actually a roast"""
+    logger.info(f"Therapy command executed by {ctx.author}")
+    
+    if target:
+        target_name = target.display_name
+        mention = target.mention
+    else:
+        target_name = ctx.author.display_name
+        mention = ctx.author.mention
+    
+    if not ai_client:
+        therapy_roasts = [
+            f"Let's explore your issues, {target_name}. *adjusts glasses* It appears your problems stem from being yourself.",
+            f"I see the root of your problems, {target_name}. Have you considered trying to be someone else?",
+            f"Your emotional baggage is so heavy, airlines would charge extra fees just to look at it.",
+            f"I'm diagnosing you with chronic disappointment syndrome. The only cure is a personality transplant."
+        ]
+        import random as rnd
+        therapy = rnd.choice(therapy_roasts)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Act like a therapist giving advice to {target_name}, but make it a savage roast disguised as professional therapy. Use therapy language but make it brutally funny."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You're a savage therapist who gives brutally honest 'therapy' that's actually clever roasts disguised as professional advice."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=200,
+                    temperature=0.9
+                )
+                therapy = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI therapy failed: {e}")
+            therapy = f"My professional opinion, {target_name}? You need more help than I'm qualified to give."
+    
+    embed = discord.Embed(title="🛋️ THERAPY SESSION 🛋️", color=0x8FBC8F)
+    embed.add_field(name="Patient", value=mention, inline=True)
+    embed.add_field(name="Session Notes", value=therapy, inline=False)
+    embed.set_footer(text="Dr. Roastbot | Not a real therapist")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def fortune(ctx, target: discord.Member = None):
+    """Dark fortune telling with savage predictions"""
+    logger.info(f"Fortune command executed by {ctx.author}")
+    
+    if target:
+        target_name = target.display_name
+        mention = target.mention
+    else:
+        target_name = ctx.author.display_name
+        mention = ctx.author.mention
+    
+    if not ai_client:
+        fortunes = [
+            f"I see disappointment in your future, {target_name}. Actually, it's already here.",
+            f"The crystal ball shows... oh wait, it cracked just looking at your future.",
+            f"Your fortune: You will continue to be exactly who you are. I'm sorry.",
+            f"The stars say your best days are behind you. Way behind you.",
+            f"I predict you'll achieve mediocrity beyond your wildest dreams."
+        ]
+        import random as rnd
+        fortune = rnd.choice(fortunes)
+    else:
+        try:
+            async with ctx.typing():
+                prompt = f"Act like a fortune teller giving {target_name} a dark, savage fortune. Use mystical language but make the prediction brutally funny and pessimistic."
+                
+                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
+                response = ai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You're a savage fortune teller who gives darkly humorous predictions disguised as mystical wisdom."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=200,
+                    temperature=0.9
+                )
+                fortune = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.warning(f"AI fortune failed: {e}")
+            fortune = f"The universe is too busy to give you a proper fortune, {target_name}."
+    
+    embed = discord.Embed(title="🔮 DARK FORTUNE 🔮", color=0x4B0082)
+    embed.add_field(name="Seeker of Truth", value=mention, inline=True)
+    embed.add_field(name="Your Destiny", value=fortune, inline=False)
+    embed.set_footer(text="🌙 Madame Roastbot's Crystal Ball")
     
     await ctx.send(embed=embed)
 

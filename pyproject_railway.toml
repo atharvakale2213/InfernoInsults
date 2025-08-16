@@ -1,0 +1,12 @@
+[project]
+name = "discord-roast-bot"
+version = "1.0.0"
+dependencies = [
+    "discord.py>=2.3.2",
+    "requests>=2.31.0",
+]
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

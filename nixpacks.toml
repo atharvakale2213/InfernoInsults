@@ -1,8 +1,8 @@
-[phases.setup]
-nixPkgs = ["python311"]
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.11"
 
 [phases.install]
-cmds = ["pip install discord.py==2.3.2 requests==2.31.0"]
+cmds = ["pip install discord.py requests"]
 
 [start]
 cmd = "python bot_simple.py"

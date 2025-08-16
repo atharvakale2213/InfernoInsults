@@ -6,10 +6,11 @@
 1. Copy all files from this Replit to a new GitHub repository
 2. Include these essential files:
    - `bot_simple.py` (main bot code)
-   - `railway.json` (Railway configuration)
-   - `Procfile` (process configuration)
-   - `nixpacks.toml` (build configuration)
-   - `runtime.txt` (Python version)
+   - `railway.json` (Railway configuration) 
+   - `Dockerfile` (Docker build configuration)
+   - `Procfile` (backup process configuration)
+
+**DEPLOYMENT APPROACH**: Now using Docker instead of Nixpacks for more reliable builds
 
 ### Step 2: Railway Deployment
 1. Go to [Railway.app](https://railway.app) and sign up/login

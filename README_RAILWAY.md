@@ -24,6 +24,8 @@ DISCORD_BOT_TOKEN=your_discord_bot_token_here
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 ```
 
+**IMPORTANT**: Railway fixed the deployment error by removing the unnecessary OpenAI dependency. Your bot now only needs `discord.py` and `requests` which are much more reliable to install.
+
 ### Step 4: Railway Free Tier Limits
 - **$5 monthly credit** (should be plenty for a Discord bot)
 - **512MB RAM** (sufficient for this bot)

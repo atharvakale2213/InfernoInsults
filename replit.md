@@ -12,6 +12,9 @@ This is a Discord bot called "Hail Mary AI Roast Bot" that generates AI-powered 
 - Enhanced user experience with rich embeds and interactive features
 - Added 6 new interactive commands: verse (rap battles), compare (user comparisons), truth (brutal honesty), roastme (maximum damage), therapy (fake therapy roasts), fortune (dark predictions)
 - Implemented specialized AI prompts for each command type with unique personalities
+- Added 8 non-roasting commands: story, joke, advice, riddle, poll, flip, dice, choose
+- Fixed Railway deployment by removing OpenAI dependency (now uses only requests for API calls)
+- Created comprehensive Railway deployment configuration files
 
 # User Preferences
 

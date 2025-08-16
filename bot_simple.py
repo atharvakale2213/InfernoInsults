@@ -3,7 +3,8 @@ from discord.ext import commands
 import random
 import os
 import logging
-from openai import OpenAI
+import requests
+import json
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -14,22 +15,11 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=',', intents=intents)
 
-# Initialize AI client (OpenRouter or OpenAI)
-ai_client = None
+# Initialize AI settings (OpenRouter)
 openrouter_key = os.getenv('OPENROUTER_API_KEY')
-openai_key = os.getenv('OPENAI_API_KEY')
 
 if openrouter_key:
-    # Use OpenRouter with custom base URL
-    ai_client = OpenAI(
-        api_key=openrouter_key,
-        base_url="https://openrouter.ai/api/v1"
-    )
     logger.info("OpenRouter client initialized for AI-powered roasts")
-elif openai_key:
-    # Fallback to direct OpenAI
-    ai_client = OpenAI(api_key=openai_key)
-    logger.info("OpenAI client initialized for AI-powered roasts")
 else:
     logger.warning("No AI API key found - using fallback roasts")
 
@@ -49,7 +39,7 @@ fallback_roasts = [
 
 async def get_ai_roast(target_name):
     """Get a dark, unhinged AI-generated roast"""
-    if not ai_client:
+    if not openrouter_key:
         # Use fallback if no AI
         import random as rnd
         roast_template = rnd.choice(fallback_roasts)
@@ -72,31 +62,79 @@ Be completely unhinged but clever. Make it so brutal that even the AI feels bad 
 
 Target: {target_name}"""
         
-        # Choose model based on provider
-        model = "gpt-4o"  # Works for both OpenRouter and OpenAI
-        if os.getenv('OPENROUTER_API_KEY'):
-            # OpenRouter supports many models - using GPT-4o for consistency
-            model = "openai/gpt-4o"
+        headers = {
+            'Authorization': f'Bearer {openrouter_key}',
+            'Content-Type': 'application/json'
+        }
         
-        response = ai_client.chat.completions.create(
-            model=model,
-            messages=[
+        payload = {
+            "model": "openai/gpt-4o",
+            "messages": [
                 {"role": "system", "content": "You are a savage roast comedian with no filter. Generate the most brutal, unhinged roasts possible while staying clever and avoiding actual harm."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=200,
-            temperature=0.95  # Maximum creativity for unhinged responses
+            "max_tokens": 200,
+            "temperature": 0.95
+        }
+        
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=10
         )
         
-        roast = response.choices[0].message.content.strip()
-        logger.info(f"Generated AI roast for {target_name}")
-        return roast
+        if response.status_code == 200:
+            data = response.json()
+            roast = data['choices'][0]['message']['content'].strip()
+            logger.info(f"Generated AI roast for {target_name}")
+            return roast
+        else:
+            raise Exception(f"API error: {response.status_code}")
         
     except Exception as e:
         logger.warning(f"AI roast failed: {e}, using fallback")
         import random as rnd
         roast_template = rnd.choice(fallback_roasts)
         return roast_template.format(target=target_name)
+
+async def make_ai_request(prompt, system_prompt, max_tokens=150, temperature=0.9):
+    """Helper function to make AI requests via OpenRouter"""
+    if not openrouter_key:
+        return None
+    
+    try:
+        headers = {
+            'Authorization': f'Bearer {openrouter_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        payload = {
+            "model": "openai/gpt-4o",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data['choices'][0]['message']['content'].strip()
+        else:
+            raise Exception(f"API error: {response.status_code}")
+            
+    except Exception as e:
+        logger.warning(f"AI request failed: {e}")
+        return None
 
 @bot.event
 async def on_ready():
@@ -301,35 +339,22 @@ async def compliment(ctx, target: discord.Member = None):
         target_name = ctx.author.display_name
         mention = ctx.author.mention
     
-    if not ai_client:
-        backhanded_compliments = [
-            "You're not as bad as people say... you're worse.",
-            "You have a face for radio... broken radio.",
-            "You're special... in a medical sense.",
-            "You're one in a million... unfortunately.",
-            "You're proof that everyone has potential... to disappoint."
-        ]
-        import random as rnd
-        compliment = rnd.choice(backhanded_compliments)
-    else:
-        try:
-            async with ctx.typing():
-                prompt = f"Create a brutally backhanded compliment for {target_name}. Make it sound nice at first but devastating by the end. Be clever and savage."
-                
-                model = "openai/gpt-4o" if os.getenv('OPENROUTER_API_KEY') else "gpt-4o"
-                response = ai_client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "You create backhanded compliments that start nice but end devastatingly."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=150,
-                    temperature=0.9
-                )
-                compliment = response.choices[0].message.content.strip()
-        except Exception as e:
-            logger.warning(f"AI compliment failed: {e}")
-            compliment = "You're not as bad as people say... you're worse."
+    async with ctx.typing():
+        prompt = f"Create a brutally backhanded compliment for {target_name}. Make it sound nice at first but devastating by the end. Be clever and savage."
+        system_prompt = "You create backhanded compliments that start nice but end devastatingly."
+        
+        compliment = await make_ai_request(prompt, system_prompt, 150, 0.9)
+        
+        if not compliment:
+            backhanded_compliments = [
+                "You're not as bad as people say... you're worse.",
+                "You have a face for radio... broken radio.",
+                "You're special... in a medical sense.",
+                "You're one in a million... unfortunately.",
+                "You're proof that everyone has potential... to disappoint."
+            ]
+            import random as rnd
+            compliment = rnd.choice(backhanded_compliments)
     
     await ctx.send(f"💐 {mention} {compliment}")
 

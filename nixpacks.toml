@@ -2,7 +2,7 @@
 nixPkgs = ["python311"]
 
 [phases.install]
-cmds = ["pip install discord.py==2.3.2 openai==1.3.7 requests==2.31.0"]
+cmds = ["pip install discord.py==2.3.2 requests==2.31.0"]
 
 [start]
 cmd = "python bot_simple.py"
